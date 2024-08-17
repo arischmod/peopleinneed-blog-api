@@ -46,7 +46,7 @@ class BlogController extends AbstractController
  
         $blog = $serializer->deserialize($requestData, Blog::class, 'json');
  
-        if (!$blog->getTitle() || !$blog->getContent() || !$blog->getAuthor()) {
+        if (!$blog->getTitle() || !$blog->getContent()) {
             return new JsonResponse(['error' => 'Missing required fields'], 400);
         }
  
