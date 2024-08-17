@@ -5,17 +5,28 @@ security:
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         # used to reload user from session & other features (e.g. switch_user)
-        app_user_provider:
-            entity:
-                class: App\Entity\User
-                property: email
+        my_in_memory_users:
+            memory:
+                users:
+                    admin: { password: $2y$13$Asv18j0cqokWGKh0EYjZy.8RdkWiSvzCSHoNDClDLzLymXw2nokXa, roles: [ 'ROLE_ADMIN' ] }
+        
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
-            lazy: true
-            provider: app_user_provider
+        api_login:
+            pattern: ^/api/login
+            stateless: true
+            provider: 'my_in_memory_users'
+            json_login:
+                provider: my_in_memory_users
+                check_path: /api/login_check #same as the route configured in config/routes.yaml
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+        api:
+            pattern:   ^/api
+            stateless: true
+            jwt: ~
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -28,6 +39,9 @@ security:
     access_control:
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+
 
 when@test:
     security:
