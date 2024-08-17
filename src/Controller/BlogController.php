@@ -3,79 +3,105 @@
 namespace App\Controller;
 
 use App\Entity\Blog;
-use App\Form\BlogType;
 use App\Repository\BlogRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\SerializerInterface;
 
-#[Route('/blog')]
+#[Route('/api/blogs')]
 class BlogController extends AbstractController
 {
-    #[Route('/', name: 'app_blog_index', methods: ['GET'])]
-    public function index(BlogRepository $blogRepository): Response
+    /**
+    * @Route("/", name="index", methods={"GET"})
+    */
+    public function index(BlogRepository $blogRepository, SerializerInterface $serializer): Response
     {
-        return $this->render('blog/index.html.twig', [
-            'blogs' => $blogRepository->findAll(),
-        ]);
+        $blogs = $blogRepository->findAll();
+        $data = $serializer->serialize($blogs, 'json');
+ 
+        return new Response($data, 200, ['Content-Type' => 'application/json']);
     }
-
-    #[Route('/new', name: 'app_blog_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+ 
+ 
+    /**
+     * @Route("/{id}", name="show", methods={"GET"})
+     */
+    public function show(Blog $blog, SerializerInterface $serializer): Response
     {
-        $blog = new Blog();
-        $form = $this->createForm(Blog::class, $blog);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($blog);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_blog_index', [], Response::HTTP_SEE_OTHER);
+        $data = $serializer->serialize($blog, 'json');
+        return new Response($data, 200, ['Content-Type' => 'application/json']);
+    }
+ 
+ 
+    /**
+     * @Route("/", name="create", methods={"POST"})
+     */
+    public function create(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
+    {
+        $requestData = $request->getContent();
+ 
+        $blog = $serializer->deserialize($requestData, Blog::class, 'json');
+ 
+        if (!$blog->getTitle() || !$blog->getContent() || !$blog->getAuthor()) {
+            return new JsonResponse(['error' => 'Missing required fields'], 400);
         }
-
-        return $this->render('blog/new.html.twig', [
-            'blog' => $blog,
-            'form' => $form,
-        ]);
+ 
+        $entityManager->persist($blog);
+        $entityManager->flush();
+ 
+        $data = $serializer->serialize($blog, 'json');
+ 
+        return new JsonResponse(['message' => 'Blog created!', 'blog' => json_decode($data)], 201);
     }
-
-    #[Route('/{id}', name: 'app_blog_show', methods: ['GET'])]
-    public function show(Blog $blog): Response
+ 
+ 
+    /**
+     * @Route("/{id}", name="update", methods={"PUT"})
+     */
+    public function update(Blog $blog, Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
     {
-        return $this->render('blog/show.html.twig', [
-            'blog' => $blog,
-        ]);
+        $requestData = $request->getContent();
+        $updatedBlog = $serializer->deserialize($requestData, Blog::class, 'json');
+ 
+        $blog->setTitle($updatedBlog->getTitle());
+        $blog->setContent($updatedBlog->getContent());
+        
+        $entityManager->flush();
+ 
+        return new Response('Blog updated!', 200);
     }
-
-    #[Route('/{id}/edit', name: 'app_blog_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Blog $blog, EntityManagerInterface $entityManager): Response
+ 
+ 
+    /**
+     * @Route("/{id}", name="delete", methods={"DELETE"})
+     */
+    public function delete(Blog $blog, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->createForm(BlogType::class, $blog);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_blog_index', [], Response::HTTP_SEE_OTHER);
+        $entityManager->remove($blog);
+        $entityManager->flush();
+ 
+        return new Response('Blog deleted!', 200);
+    }
+ 
+ 
+    /**
+     * @Route("/search/{id}", name="search_by_id", methods={"GET"})
+     */
+    public function findById(BlogRepository $blogRepository, int $id, SerializerInterface $serializer): Response
+    {
+        $blog = $blogRepository->find($id);
+ 
+        if (!$blog) {
+            return new JsonResponse(['error' => 'Blog not found'], 404);
         }
-
-        return $this->render('blog/edit.html.twig', [
-            'blog' => $blog,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_blog_delete', methods: ['POST'])]
-    public function delete(Request $request, Blog $blog, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$blog->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($blog);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('app_blog_index', [], Response::HTTP_SEE_OTHER);
+ 
+        $data = $serializer->serialize($blog, 'json');
+ 
+        return new Response($data, 200, ['Content-Type' => 'application/json']);
     }
 }

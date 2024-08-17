@@ -3,3 +3,43 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+
+
+user_api_create:
+   path: /api/users
+   controller: 'App\Controller\UserController::create'
+   methods: ['POST']
+
+blog_api_create:
+   path: /api/blogs
+   controller: 'App\Controller\BlogController::create'
+   methods: ['POST']
+
+blog_api_index:
+   path: /api/blogs
+   controller: 'App\Controller\BlogController::index'
+   methods: ['GET']
+
+
+blog_api_show:
+   path: /api/blogs/{id}
+   controller: 'App\Controller\BlogController::show'
+   methods: ['GET']
+
+blog_api_update:
+   path: /api/blogs/{id}
+   controller: 'App\Controller\BlogController::update'
+   methods: ['PUT']
+
+
+blog_api_delete:
+   path: /api/blogs/{id}
+   controller: 'App\Controller\BlogController::delete'
+   methods: ['DELETE']
+
+
+blog_api_search_by_id:
+   path: /api/blogs/search/{id}
+   controller: 'App\Controller\BlogController::findById'
+   methods: ['GET']

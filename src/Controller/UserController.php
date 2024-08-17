@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Repository\UserRepository;
 use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\ORM\EntityManagerInterface;
@@ -12,16 +11,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+#[Route('api/users')]
 class UserController extends AbstractController
 {
-    #[Route('/user', name: 'app_user')]
-    public function index(): Response
-    {
-        return $this->render('user/index.html.twig', [
-            'controller_name' => 'UserController',
-        ]);
-    }
-
    /**
     * @Route("/", name="create", methods={"POST"})
     */
@@ -40,7 +32,7 @@ class UserController extends AbstractController
 
        $data = $serializer->serialize($user, 'json');
 
-       return new JsonResponse(['message' => 'Product created!', 'product' => json_decode($data)], 201);
+       return new JsonResponse(['message' => 'User created!', 'user' => json_decode($data)], 201);
    }
 
 }
